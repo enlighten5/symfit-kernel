@@ -414,9 +414,16 @@ typedef struct TCGTemp {
     unsigned int temp_allocated:1;
     unsigned int temp_subindex:2;
 
+    /* Maximum len of subindex. Must be the same size as temp_subindex */
+    unsigned int temp_subindex_len:1;
+    /* If true, this temp contains a symbolic expression. */
+    unsigned int symbolic_expression:1;
+
     int64_t val;
     struct TCGTemp *mem_base;
     intptr_t mem_offset;
+    /* Indirect bases used to store the offset to the symbolic shadow. */
+    intptr_t sym_offset;
     const char *name;
 
     /* Pass-specific information that can be stored for a temporary.
@@ -633,6 +640,18 @@ static inline TCGTemp *tcgv_i32_temp(TCGv_i32 v)
 }
 #endif
 
+static inline TCGTemp *temp_expr(TCGTemp *ts) {
+    // Length of subindex. For now, it can only be 0 or 1 (for i128)
+    // Could become bigger in the future.
+    unsigned char temp_sz = ts->temp_subindex_len;
+
+    tcg_debug_assert(temp_idx(ts) + temp_sz + 1 < tcg_ctx->nb_temps);
+    tcg_debug_assert(!ts->symbolic_expression);
+    tcg_debug_assert((ts + temp_sz + 1)->symbolic_expression);
+
+    return ts + temp_sz + 1;
+}
+
 static inline TCGTemp *tcgv_i64_temp(TCGv_i64 v)
 {
     return tcgv_i32_temp((TCGv_i32)v);
@@ -712,6 +731,40 @@ static inline TCGArg tcg_get_insn_param(TCGOp *op, int arg)
 static inline void tcg_set_insn_param(TCGOp *op, int arg, TCGArg v)
 {
     op->args[arg] = v;
+}
+
+
+static inline TCGv_ptr tcgv_i32_expr(TCGv_i32 v)
+{
+    return temp_tcgv_ptr(temp_expr(tcgv_i32_temp(v)));
+}
+
+static inline TCGv_ptr tcgv_i64_expr(TCGv_i64 v)
+{
+    return temp_tcgv_ptr(temp_expr(tcgv_i64_temp(v)));
+}
+
+static inline TCGv_ptr tcgv_vec_expr(TCGv_vec v)
+{
+    return temp_tcgv_ptr(temp_expr(tcgv_vec_temp(v)));
+}
+
+/* Expression pointers as (64-bit) numbers for code simplification. This assumes
+ * that we're running on a 64-bit architecture! */
+
+static inline TCGv_i64 tcgv_i32_expr_num(TCGv_i32 v)
+{
+    return temp_tcgv_i64(temp_expr(tcgv_i32_temp(v)));
+}
+
+static inline TCGv_i64 tcgv_i64_expr_num(TCGv_i64 v)
+{
+    return temp_tcgv_i64(temp_expr(tcgv_i64_temp(v)));
+}
+
+static inline TCGv_i64 tcgv_vec_expr_num(TCGv_vec v)
+{
+    return temp_tcgv_i64(temp_expr(tcgv_vec_temp(v)));
 }
 
 static inline uint64_t tcg_get_insn_start_param(TCGOp *op, int arg)
@@ -867,6 +920,16 @@ void tcg_gen_call6(TCGHelperInfo *, TCGTemp *ret, TCGTemp *, TCGTemp *,
                    TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *);
 void tcg_gen_call7(TCGHelperInfo *, TCGTemp *ret, TCGTemp *, TCGTemp *,
                    TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *);
+
+void tcg_gen_call8(TCGHelperInfo *, TCGTemp *ret, TCGTemp *, TCGTemp *,
+                   TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *);
+void tcg_gen_call9(TCGHelperInfo *, TCGTemp *ret, TCGTemp *, TCGTemp *,
+                   TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *);
+void tcg_gen_call10(TCGHelperInfo *, TCGTemp *ret, TCGTemp *, TCGTemp *,
+                   TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *);
+void tcg_gen_call11(TCGHelperInfo *, TCGTemp *ret, TCGTemp *, TCGTemp *,
+                   TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *, TCGTemp *);
+
 
 TCGOp *tcg_emit_op(TCGOpcode opc, unsigned nargs);
 void tcg_op_remove(TCGContext *s, TCGOp *op);

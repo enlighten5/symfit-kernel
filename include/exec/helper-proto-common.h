@@ -13,6 +13,14 @@
 #include "exec/helper-proto.h.inc"
 #undef  HELPER_H
 
+#define HELPER_H "accel/tcg/tcg-runtime-sym.h"
+#include "exec/helper-proto.h.inc"
+#undef  HELPER_H
+
+#define HELPER_H "accel/tcg/tcg-runtime-sym-vec.h"
+#include "exec/helper-proto.h.inc"
+#undef  HELPER_H
+
 #define HELPER_H "accel/tcg/plugin-helpers.h"
 #include "exec/helper-proto.h.inc"
 #undef  HELPER_H

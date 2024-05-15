@@ -130,23 +130,37 @@ static void tcg_gen_req_mo(TCGBar type)
     }
 }
 
-/* Only required for loads, where value might overlap addr. */
-static TCGv_i64 plugin_maybe_preserve_addr(TCGTemp *addr)
+static TCGv_i64 preserve_addr(TCGTemp *addr)\
 {
-#ifdef CONFIG_PLUGIN
-    if (tcg_ctx->plugin_insn != NULL) {
-        /* Save a copy of the vaddr for use after a load.  */
-        TCGv_i64 temp = tcg_temp_ebb_new_i64();
-        if (tcg_ctx->addr_type == TCG_TYPE_I32) {
-            tcg_gen_extu_i32_i64(temp, temp_tcgv_i32(addr));
-        } else {
-            tcg_gen_mov_i64(temp, temp_tcgv_i64(addr));
-        }
-        return temp;
+    /* Save a copy of the vaddr for use after a load.  */
+    TCGv_i64 temp = tcg_temp_ebb_new_i64();
+    if (tcg_ctx->addr_type == TCG_TYPE_I32) {
+        tcg_gen_extu_i32_i64(temp, temp_tcgv_i32(addr));
+    } else {
+        tcg_gen_mov_i64(temp, temp_tcgv_i64(addr));
     }
-#endif
-    return NULL;
+    return temp;
 }
+
+/* Only required for loads, where value might overlap addr. */
+
+// static TCGv_i64 plugin_maybe_preserve_addr(TCGTemp *addr)
+// {
+// #ifdef CONFIG_PLUGIN
+//     if (tcg_ctx->plugin_insn != NULL) {
+//         /* Save a copy of the vaddr for use after a load.  */
+//         TCGv_i64 temp = tcg_temp_ebb_new_i64();
+//         if (tcg_ctx->addr_type == TCG_TYPE_I32) {
+//             tcg_gen_extu_i32_i64(temp, temp_tcgv_i32(addr));
+//         } else {
+//             tcg_gen_mov_i64(temp, temp_tcgv_i64(addr));
+//         }
+//         return temp;
+//     }
+// #endif
+//     return NULL;
+// }
+
 
 static void
 plugin_gen_mem_callbacks(TCGv_i64 copy_addr, TCGTemp *orig_addr, MemOpIdx oi,
@@ -182,6 +196,7 @@ static void tcg_gen_qemu_ld_i32_int(TCGv_i32 val, TCGTemp *addr,
     MemOpIdx orig_oi, oi;
     TCGv_i64 copy_addr;
     TCGOpcode opc;
+    TCGv_i64 load_size, mmu_idx;
 
     tcg_gen_req_mo(TCG_MO_LD_LD | TCG_MO_ST_LD);
     orig_memop = memop = tcg_canonicalize_memop(memop, 0, 0);
@@ -196,7 +211,7 @@ static void tcg_gen_qemu_ld_i32_int(TCGv_i32 val, TCGTemp *addr,
         oi = make_memop_idx(memop, idx);
     }
 
-    copy_addr = plugin_maybe_preserve_addr(addr);
+    copy_addr = preserve_addr(addr);
     if (tcg_ctx->addr_type == TCG_TYPE_I32) {
         opc = INDEX_op_qemu_ld_a32_i32;
     } else {
@@ -204,6 +219,14 @@ static void tcg_gen_qemu_ld_i32_int(TCGv_i32 val, TCGTemp *addr,
     }
     gen_ldst(opc, tcgv_i32_temp(val), NULL, addr, oi);
     plugin_gen_mem_callbacks(copy_addr, addr, orig_oi, QEMU_PLUGIN_MEM_R);
+
+    /* Perform the symbolic memory access. Doing so _after_ the concrete
+     * operation ensures that the target address is in the TLB. */
+    load_size = tcg_constant_i64(1 << (memop & MO_SIZE));
+    mmu_idx = tcg_constant_i64(idx);
+    gen_helper_sym_load_guest_i32(tcgv_i32_expr(val), tcg_env,
+                                  copy_addr, tcgv_i64_expr(copy_addr),
+                                  load_size, mmu_idx);
 
     if ((orig_memop ^ memop) & MO_BSWAP) {
         switch (orig_memop & MO_SIZE) {
@@ -235,6 +258,7 @@ static void tcg_gen_qemu_st_i32_int(TCGv_i32 val, TCGTemp *addr,
     TCGv_i32 swap = NULL;
     MemOpIdx orig_oi, oi;
     TCGOpcode opc;
+    TCGv_i64 store_size = NULL, mmu_idx = NULL;
 
     tcg_gen_req_mo(TCG_MO_LD_ST | TCG_MO_ST_ST);
     memop = tcg_canonicalize_memop(memop, 0, 1);
@@ -273,6 +297,15 @@ static void tcg_gen_qemu_st_i32_int(TCGv_i32 val, TCGTemp *addr,
     gen_ldst(opc, tcgv_i32_temp(val), NULL, addr, oi);
     plugin_gen_mem_callbacks(NULL, addr, orig_oi, QEMU_PLUGIN_MEM_W);
 
+    /* Perform the symbolic memory access. Doing so _after_ the concrete
+     * operation ensures that the target address is in the TLB. */
+    store_size = tcg_constant_i64(1 << (memop & MO_SIZE));
+    mmu_idx = tcg_constant_i64(idx);
+    gen_helper_sym_store_guest_i32(tcg_env,
+                                   val, tcgv_i32_expr(val),
+                                   temp_tcgv_i64(addr), tcgv_i64_expr(temp_tcgv_i64(addr)),
+                                   store_size, mmu_idx);
+
     if (swap) {
         tcg_temp_free_i32(swap);
     }
@@ -293,6 +326,7 @@ static void tcg_gen_qemu_ld_i64_int(TCGv_i64 val, TCGTemp *addr,
     MemOpIdx orig_oi, oi;
     TCGv_i64 copy_addr;
     TCGOpcode opc;
+    TCGv_i64 load_size, mmu_idx;
 
     if (TCG_TARGET_REG_BITS == 32 && (memop & MO_SIZE) < MO_64) {
         tcg_gen_qemu_ld_i32_int(TCGV_LOW(val), addr, idx, memop);
@@ -317,7 +351,7 @@ static void tcg_gen_qemu_ld_i64_int(TCGv_i64 val, TCGTemp *addr,
         oi = make_memop_idx(memop, idx);
     }
 
-    copy_addr = plugin_maybe_preserve_addr(addr);
+    copy_addr = preserve_addr(addr);
     if (tcg_ctx->addr_type == TCG_TYPE_I32) {
         opc = INDEX_op_qemu_ld_a32_i64;
     } else {
@@ -325,6 +359,14 @@ static void tcg_gen_qemu_ld_i64_int(TCGv_i64 val, TCGTemp *addr,
     }
     gen_ldst_i64(opc, val, addr, oi);
     plugin_gen_mem_callbacks(copy_addr, addr, orig_oi, QEMU_PLUGIN_MEM_R);
+
+    /* Perform the symbolic memory access. Doing so _after_ the concrete
+    * operation ensures that the target address is in the TLB. */
+    mmu_idx = tcg_constant_i64(idx);
+    load_size = tcg_constant_i64(1 << (memop & MO_SIZE));
+    gen_helper_sym_load_guest_i64(tcgv_i64_expr(val), tcg_env,
+                                  copy_addr, tcgv_i64_expr(copy_addr),
+                                  load_size, mmu_idx);
 
     if ((orig_memop ^ memop) & MO_BSWAP) {
         int flags = (orig_memop & MO_SIGN
@@ -360,6 +402,7 @@ static void tcg_gen_qemu_st_i64_int(TCGv_i64 val, TCGTemp *addr,
     TCGv_i64 swap = NULL;
     MemOpIdx orig_oi, oi;
     TCGOpcode opc;
+    TCGv_i64 store_size = NULL, mmu_idx = NULL;
 
     if (TCG_TARGET_REG_BITS == 32 && (memop & MO_SIZE) < MO_64) {
         tcg_gen_qemu_st_i32_int(TCGV_LOW(val), addr, idx, memop);
@@ -397,6 +440,15 @@ static void tcg_gen_qemu_st_i64_int(TCGv_i64 val, TCGTemp *addr,
     }
     gen_ldst_i64(opc, val, addr, oi);
     plugin_gen_mem_callbacks(NULL, addr, orig_oi, QEMU_PLUGIN_MEM_W);
+
+    /* Perform the symbolic memory access. Doing so _after_ the concrete
+    * operation ensures that the target address is in the TLB. */
+    mmu_idx = tcg_constant_i64(idx);
+    store_size = tcg_constant_i64(1 << (memop & MO_SIZE));
+    gen_helper_sym_store_guest_i64(tcg_env,
+                                   val, tcgv_i64_expr(val),
+                                   temp_tcgv_i64(addr), tcgv_i64_expr(temp_tcgv_i64(addr)),
+                                   store_size, mmu_idx);
 
     if (swap) {
         tcg_temp_free_i64(swap);
@@ -520,7 +572,7 @@ static void tcg_gen_qemu_ld_i128_int(TCGv_i128 val, TCGTemp *addr,
     orig_oi = make_memop_idx(memop, idx);
 
     /* TODO: For now, force 32-bit hosts to use the helper. */
-    if (TCG_TARGET_HAS_qemu_ldst_i128 && TCG_TARGET_REG_BITS == 64) {
+    /* if (TCG_TARGET_HAS_qemu_ldst_i128 && TCG_TARGET_REG_BITS == 64) {
         TCGv_i64 lo, hi;
         bool need_bswap = false;
         MemOpIdx oi = orig_oi;
@@ -546,11 +598,13 @@ static void tcg_gen_qemu_ld_i128_int(TCGv_i128 val, TCGTemp *addr,
             tcg_gen_bswap64_i64(lo, lo);
             tcg_gen_bswap64_i64(hi, hi);
         }
-    } else if (use_two_i64_for_i128(memop)) {
+    } else if (use_two_i64_for_i128(memop)) { */
+        // Always take this path to get symbolic propagation
         MemOp mop[2];
         TCGTemp *addr_p8;
         TCGv_i64 x, y;
         bool need_bswap;
+        TCGv_i64 load_size, mmu_idx;
 
         canonicalize_memop_i128_as_i64(mop, memop);
         need_bswap = (mop[0] ^ memop) & MO_BSWAP;
@@ -576,6 +630,14 @@ static void tcg_gen_qemu_ld_i128_int(TCGv_i128 val, TCGTemp *addr,
 
         gen_ldst_i64(opc, x, addr, make_memop_idx(mop[0], idx));
 
+        /* Perform the symbolic memory access. Doing so _after_ the concrete
+        * operation ensures that the target address is in the TLB. */
+        mmu_idx = tcg_constant_i64(idx);
+        load_size = tcg_constant_i64(1 << MO_64);
+        gen_helper_sym_load_guest_i64(tcgv_i64_expr(x),tcg_env,
+                                      temp_tcgv_i64(addr), tcgv_i64_expr(temp_tcgv_i64(addr)),
+                                      load_size, mmu_idx);
+
         if (need_bswap) {
             tcg_gen_bswap64_i64(x, x);
         }
@@ -591,12 +653,19 @@ static void tcg_gen_qemu_ld_i128_int(TCGv_i128 val, TCGTemp *addr,
         }
 
         gen_ldst_i64(opc, y, addr_p8, make_memop_idx(mop[1], idx));
+
+        /* Perform the symbolic memory access. Doing so _after_ the concrete
+        * operation ensures that the target address is in the TLB. */
+        gen_helper_sym_load_guest_i64(tcgv_i64_expr(y), tcg_env,
+                                      temp_tcgv_i64(addr_p8), tcgv_i64_expr(temp_tcgv_i64(addr_p8)),
+                                      load_size, mmu_idx);
+
         tcg_temp_free_internal(addr_p8);
 
         if (need_bswap) {
             tcg_gen_bswap64_i64(y, y);
         }
-    } else {
+    /* } else {
         if (tcg_ctx->addr_type == TCG_TYPE_I32) {
             ext_addr = tcg_temp_ebb_new_i64();
             tcg_gen_extu_i32_i64(ext_addr, temp_tcgv_i32(addr));
@@ -604,7 +673,7 @@ static void tcg_gen_qemu_ld_i128_int(TCGv_i128 val, TCGTemp *addr,
         }
         gen_helper_ld_i128(val, tcg_env, temp_tcgv_i64(addr),
                            tcg_constant_i32(orig_oi));
-    }
+    } */
 
     plugin_gen_mem_callbacks(ext_addr, addr, orig_oi, QEMU_PLUGIN_MEM_R);
 }
@@ -636,7 +705,7 @@ static void tcg_gen_qemu_st_i128_int(TCGv_i128 val, TCGTemp *addr,
     orig_oi = make_memop_idx(memop, idx);
 
     /* TODO: For now, force 32-bit hosts to use the helper. */
-
+    /*
     if (TCG_TARGET_HAS_qemu_ldst_i128 && TCG_TARGET_REG_BITS == 64) {
         TCGv_i64 lo, hi;
         MemOpIdx oi = orig_oi;
@@ -665,10 +734,11 @@ static void tcg_gen_qemu_st_i128_int(TCGv_i128 val, TCGTemp *addr,
             tcg_temp_free_i64(lo);
             tcg_temp_free_i64(hi);
         }
-    } else if (use_two_i64_for_i128(memop)) {
+    } else if (use_two_i64_for_i128(memop)) { */
         MemOp mop[2];
         TCGTemp *addr_p8;
         TCGv_i64 x, y, b = NULL;
+        TCGv_i64 store_size, mmu_idx;
 
         canonicalize_memop_i128_as_i64(mop, memop);
 
@@ -694,6 +764,15 @@ static void tcg_gen_qemu_st_i128_int(TCGv_i128 val, TCGTemp *addr,
 
         gen_ldst_i64(opc, x, addr, make_memop_idx(mop[0], idx));
 
+        /* Perform the symbolic memory access. Doing so _after_ the concrete
+        * operation ensures that the target address is in the TLB. */
+        mmu_idx = tcg_constant_i64(idx);
+        store_size = tcg_constant_i64(1 << MO_64);
+        gen_helper_sym_store_guest_i64(tcg_env,
+                                       x, tcgv_i64_expr(x),
+                                       temp_tcgv_i64(addr), tcgv_i64_expr(temp_tcgv_i64(addr)),
+                                       store_size, mmu_idx);
+
         if (tcg_ctx->addr_type == TCG_TYPE_I32) {
             TCGv_i32 t = tcg_temp_ebb_new_i32();
             tcg_gen_addi_i32(t, temp_tcgv_i32(addr), 8);
@@ -707,12 +786,27 @@ static void tcg_gen_qemu_st_i128_int(TCGv_i128 val, TCGTemp *addr,
         if (b) {
             tcg_gen_bswap64_i64(b, y);
             gen_ldst_i64(opc, b, addr_p8, make_memop_idx(mop[1], idx));
+
+            /* Perform the symbolic memory access. Doing so _after_ the concrete
+            * operation ensures that the target address is in the TLB. */
+            gen_helper_sym_store_guest_i64(tcg_env,
+                                           b, tcgv_i64_expr(b),
+                                           temp_tcgv_i64(addr_p8), tcgv_i64_expr(temp_tcgv_i64(addr_p8)),
+                                           store_size, mmu_idx);
+
             tcg_temp_free_i64(b);
         } else {
             gen_ldst_i64(opc, y, addr_p8, make_memop_idx(mop[1], idx));
+
+            /* Perform the symbolic memory access. Doing so _after_ the concrete
+            * operation ensures that the target address is in the TLB. */
+            gen_helper_sym_store_guest_i64(tcg_env,
+                                           y, tcgv_i64_expr(y),
+                                           temp_tcgv_i64(addr_p8), tcgv_i64_expr(temp_tcgv_i64(addr_p8)),
+                                           store_size, mmu_idx);
         }
         tcg_temp_free_internal(addr_p8);
-    } else {
+    /* } else {
         if (tcg_ctx->addr_type == TCG_TYPE_I32) {
             ext_addr = tcg_temp_ebb_new_i64();
             tcg_gen_extu_i32_i64(ext_addr, temp_tcgv_i32(addr));
@@ -720,7 +814,7 @@ static void tcg_gen_qemu_st_i128_int(TCGv_i128 val, TCGTemp *addr,
         }
         gen_helper_st_i128(tcg_env, temp_tcgv_i64(addr), val,
                            tcg_constant_i32(orig_oi));
-    }
+    } */
 
     plugin_gen_mem_callbacks(ext_addr, addr, orig_oi, QEMU_PLUGIN_MEM_W);
 }

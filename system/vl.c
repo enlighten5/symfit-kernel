@@ -2742,6 +2742,9 @@ void qemu_init(int argc, char **argv)
     bool userconfig = true;
     FILE *vmstate_dump_file = NULL;
 
+    /* Initialize the symbolic backend */
+    _sym_initialize();
+
     qemu_add_opts(&qemu_drive_opts);
     qemu_add_drive_opts(&qemu_legacy_drive_opts);
     qemu_add_drive_opts(&qemu_common_drive_opts);

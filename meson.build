@@ -1,5 +1,5 @@
 project('qemu', ['c'], meson_version: '>=0.63.0',
-        default_options: ['warning_level=1', 'c_std=gnu11', 'cpp_std=gnu++11', 'b_colorout=auto',
+        default_options: ['warning_level=1', 'c_std=gnu11', 'cpp_std=gnu++17', 'b_colorout=auto',
                           'b_staticpic=false', 'stdsplit=false', 'optimization=2', 'b_pie=true'],
         version: files('VERSION'))
 
@@ -17,6 +17,7 @@ not_found = dependency('', required: false)
 keyval = import('keyval')
 ss = import('sourceset')
 fs = import('fs')
+cmake = import('cmake')
 
 host_os = host_machine.system()
 config_host = keyval.load(meson.current_build_dir() / 'config-host.mak')
@@ -1235,6 +1236,29 @@ if host_os == 'linux' and (have_system or have_tools)
   libudev = dependency('libudev',
                        method: 'pkg-config',
                        required: get_option('libudev'))
+endif
+
+symcc_rt_backend = get_option('symcc_rt_backend')
+
+if not fs.is_file('subprojects/symcc-rt/include/RuntimeCommon.h')
+  error('''Symcc Runtime does not seem to be present.
+Did you initialize the symcc-rt submodule? (git submodule update --init --recursive subprojects/symcc-rt)''')
+endif
+
+symcc_rt = not_found
+
+symcc_rt_vars = cmake.subproject_options()
+symcc_rt_vars.add_cmake_defines({
+  'SYMCC_RT_BACKEND': symcc_rt_backend,
+  'Z3_TRUST_SYSTEM_VERSION': get_option('symcc_rt_trust_system_z3'),
+  'LLVM_VERSION': get_option('symcc_rt_llvm_version'),
+})
+
+symcc_rt_proj = cmake.subproject('symcc-rt', options: symcc_rt_vars)
+if get_option('symcc_rt_shared')
+  symcc_rt = symcc_rt_proj.dependency('SymCCRtShared')
+else
+  symcc_rt = symcc_rt_proj.dependency('SymCCRtStatic')
 endif
 
 mpathlibs = [libudev]
@@ -3799,6 +3823,9 @@ common_ss.add(qom, qemuutil)
 common_ss.add_all(when: 'CONFIG_SYSTEM_ONLY', if_true: [system_ss])
 common_ss.add_all(when: 'CONFIG_USER_ONLY', if_true: user_ss)
 
+common_ss.add(symcc_rt)
+specific_ss.add(symcc_rt)
+
 # Note that this library is never used directly (only through extract_objects)
 # and is not built by default; therefore, source files not used by the build
 # configuration will be in build.ninja, but are never built by default.
@@ -4425,6 +4452,18 @@ summary_info += {'vde support':       vde}
 summary_info += {'netmap support':    have_netmap}
 summary_info += {'l2tpv3 support':    have_l2tpv3}
 summary(summary_info, bool_yn: true, section: 'Network backends')
+
+# SymQEMU
+summary_info = {}
+summary_info += {'SymCC Runtime Backend':             symcc_rt_backend}
+summary_info += {'SymCC Runtime trust system\'s Z3':  get_option('symcc_rt_trust_system_z3')}
+summary_info += {'SymCC Shared Library':              get_option('symcc_rt_shared')}
+if get_option('symcc_rt_llvm_version') != ''
+  summary_info += {'SymCC Runtime with LLVM Version': get_option('symcc_rt_llvm_version')}
+else
+  summary_info += {'SymCC Runtime with LLVM Version': 'To be detected by SymCC Runtime build'}
+endif
+summary(summary_info, bool_yn: true, section: 'SymQEMU')
 
 # Libraries
 summary_info = {}

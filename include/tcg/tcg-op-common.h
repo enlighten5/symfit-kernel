@@ -12,6 +12,20 @@
 #include "exec/helper-proto-common.h"
 #include "exec/helper-gen-common.h"
 
+/* Slightly questionable macros to save typing and for (arguably) clearer code:
+ * SYM_HELPER_BINARY_32(add) generates a helper call to "sym_add_i32", expecting
+ * TCGv_i32 variables ret, arg1 and arg2 to exist in the environment.
+ * SYM_HELPER_BINARY_64 generates the analogous code for 64-bit helpers. */
+
+#define SYM_HELPER_BINARY_32(name)                                              \
+    gen_helper_sym_ ## name ## _i32(tcgv_i32_expr(ret),                         \
+                           arg1, tcgv_i32_expr(arg1),                           \
+                           arg2, tcgv_i32_expr(arg2))
+#define SYM_HELPER_BINARY_64(name)                                              \
+    gen_helper_sym_ ## name ## _i64(tcgv_i64_expr(ret),                         \
+                           arg1, tcgv_i64_expr(arg1),                           \
+                           arg2, tcgv_i64_expr(arg2))
+
 TCGv_i32 tcg_constant_i32(int32_t val);
 TCGv_i64 tcg_constant_i64(int64_t val);
 TCGv_vec tcg_constant_vec(TCGType type, unsigned vece, int64_t val);
@@ -289,6 +303,8 @@ void tcg_gen_sar_i64(TCGv_i64 ret, TCGv_i64 arg1, TCGv_i64 arg2);
 void tcg_gen_mul_i64(TCGv_i64 ret, TCGv_i64 arg1, TCGv_i64 arg2);
 void tcg_gen_neg_i64(TCGv_i64 ret, TCGv_i64 arg);
 
+/* Concrete operations */
+void tcg_gen_mov_i64_concrete(TCGv_i64 ret, TCGv_i64 arg);
 
 /* Size changing operations.  */
 

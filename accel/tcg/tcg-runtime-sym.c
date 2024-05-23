@@ -22,6 +22,7 @@
 #include "tcg/tcg.h"
 #include "exec/translation-block.h"
 #include "accel/tcg/tcg-runtime-sym-common.h"
+#include "exec/log.h"
 
 #define HELPER_H  "accel/tcg/tcg-runtime-sym.h"
 #include "exec/helper-info.c.inc"
@@ -296,6 +297,7 @@ static void *sym_load_guest_internal(CPUArchState *env,
                                      uint64_t load_length, uint8_t result_length,
                                      target_ulong mmu_idx)
 {
+    return NULL;
     /* Try an alternative address */
     if (addr_expr != NULL)
         _sym_push_path_constraint(
@@ -331,6 +333,7 @@ static void sym_store_guest_internal(CPUArchState *env,
                                      uint64_t addr, void *addr_expr,
                                      uint64_t length, target_ulong mmu_idx)
 {
+    return NULL;
     /* Try an alternative address */
     if (addr_expr != NULL)
         _sym_push_path_constraint(
@@ -363,6 +366,7 @@ void HELPER(sym_store_guest_i64)(CPUArchState *env,
 static void *sym_load_host_internal(void *addr, uint64_t offset,
                                     uint64_t load_length, uint64_t result_length)
 {
+    return NULL;
     void *memory_expr = _sym_read_memory(
         (uint8_t*)addr + offset, load_length, true);
 
@@ -390,6 +394,7 @@ void *HELPER(sym_load_host_vec)(void *addr, uint64_t offset, uint64_t length)
 void HELPER(sym_store_host)(void *value_expr, void *addr,
                                 uint64_t offset, uint64_t length)
 {
+    return NULL;
     _sym_write_memory((uint8_t*)addr + offset, length, value_expr, true);
 }
 
@@ -600,6 +605,7 @@ static void *sym_movcond_internal(CPUArchState *env,
                               int32_t comparison_operator,
                               uint64_t is_taken, uint8_t result_bits)
 {
+    return NULL;
     if (c1_expr == NULL && c2_expr == NULL && v1_expr == NULL && v2_expr == NULL) {
         return NULL;
     }
@@ -665,21 +671,21 @@ void *HELPER(sym_movcond_i64)(CPUArchState *env,
 
 void HELPER(sym_notify_call)(uint64_t return_address)
 {
-    _sym_notify_call(return_address);
+    // _sym_notify_call(return_address);
 }
 
 void HELPER(sym_notify_return)(uint64_t return_address)
 {
-    _sym_notify_ret(return_address);
+    // _sym_notify_ret(return_address);
 }
 
 void HELPER(sym_notify_block)(uint64_t block_id)
 {
-    _sym_notify_basic_block(block_id);
+    // _sym_notify_basic_block(block_id);
 }
 
 void HELPER(sym_collect_garbage)(void)
 {
-    _sym_collect_garbage();
+    // _sym_collect_garbage();
 }
 

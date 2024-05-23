@@ -334,7 +334,7 @@ void tcg_gen_dupi_vec(unsigned vece, TCGv_vec r, uint64_t a)
 
 void tcg_gen_dup_i64_vec(unsigned vece, TCGv_vec r, TCGv_i64 a)
 {
-    gen_helper_sym_duplicate_value_into_vec(tcgv_vec_expr(r), tcgv_i64_expr(a), tcg_constant_i64(vece), tcg_constant_i64(vec_size(r)));
+    // gen_helper_sym_duplicate_value_into_vec(tcgv_vec_expr(r), tcgv_i64_expr(a), tcg_constant_i64(vece), tcg_constant_i64(vec_size(r)));
 
     TCGArg ri = tcgv_vec_arg(r);
     TCGTemp *rt = arg_temp(ri);
@@ -355,7 +355,7 @@ void tcg_gen_dup_i64_vec(unsigned vece, TCGv_vec r, TCGv_i64 a)
 
 void tcg_gen_dup_i32_vec(unsigned vece, TCGv_vec r, TCGv_i32 a)
 {
-    gen_helper_sym_duplicate_value_into_vec(tcgv_vec_expr(r), tcgv_i32_expr(a), tcg_constant_i64(vece), tcg_constant_i64(vec_size(r)));
+    // gen_helper_sym_duplicate_value_into_vec(tcgv_vec_expr(r), tcgv_i32_expr(a), tcg_constant_i64(vece), tcg_constant_i64(vec_size(r)));
 
     TCGArg ri = tcgv_vec_arg(r);
     TCGArg ai = tcgv_i32_arg(a);
@@ -368,13 +368,13 @@ void tcg_gen_dup_i32_vec(unsigned vece, TCGv_vec r, TCGv_i32 a)
 void tcg_gen_dup_mem_vec(unsigned vece, TCGv_vec r, TCGv_ptr b,
                          tcg_target_long ofs)
 {
-    gen_helper_sym_load_and_duplicate_into_vec(
-            tcgv_vec_expr(r),
-            b,
-            tcg_constant_i64(ofs),
-            tcg_constant_i64(vec_size(r)),
-            tcg_constant_i64(vece)
-    );
+    // gen_helper_sym_load_and_duplicate_into_vec(
+    //         tcgv_vec_expr(r),
+    //         b,
+    //         tcg_constant_i64(ofs),
+    //         tcg_constant_i64(vec_size(r)),
+    //         tcg_constant_i64(vece)
+    // );
 
     TCGArg ri = tcgv_vec_arg(r);
     TCGArg bi = tcgv_ptr_arg(b);
@@ -397,24 +397,24 @@ static void vec_gen_ldst(TCGOpcode opc, TCGv_vec r, TCGv_ptr b, TCGArg o)
 void tcg_gen_ld_vec(TCGv_vec r, TCGv_ptr b, TCGArg o)
 {
 
-    gen_helper_sym_load_host_vec(
-                tcgv_vec_expr(r),
-                b,
-                tcg_constant_i64(o),
-                tcg_constant_i64(vec_size(r) / 8)
-            );
+    // gen_helper_sym_load_host_vec(
+    //             tcgv_vec_expr(r),
+    //             b,
+    //             tcg_constant_i64(o),
+    //             tcg_constant_i64(vec_size(r) / 8)
+    //         );
 
     vec_gen_ldst(INDEX_op_ld_vec, r, b, o);
 }
 
 void tcg_gen_st_vec(TCGv_vec r, TCGv_ptr b, TCGArg o)
 {
-    gen_helper_sym_store_host(
-                tcgv_vec_expr(r),
-                b,
-                tcg_constant_i64(o),
-                tcg_constant_i64(vec_size(r) / 8)
-            );
+    // gen_helper_sym_store_host(
+    //             tcgv_vec_expr(r),
+    //             b,
+    //             tcg_constant_i64(o),
+    //             tcg_constant_i64(vec_size(r) / 8)
+    //         );
 
     vec_gen_ldst(INDEX_op_st_vec, r, b, o);
 }
@@ -445,26 +445,26 @@ void tcg_gen_stl_vec(TCGv_vec r, TCGv_ptr b, TCGArg o, TCGType low_type)
             g_assert_not_reached();
     }
 
-    gen_helper_sym_store_host(tcgv_vec_expr(r), b, tcg_constant_i64(o), tcg_constant_i64(length));
+    // gen_helper_sym_store_host(tcgv_vec_expr(r), b, tcg_constant_i64(o), tcg_constant_i64(length));
 
     vec_gen_3(INDEX_op_st_vec, low_type, 0, ri, bi, o);
 }
 
 void tcg_gen_and_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_and_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_and_vec);
     vec_gen_op3(INDEX_op_and_vec, 0, r, a, b);
 }
 
 void tcg_gen_or_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_or_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_or_vec);
     vec_gen_op3(INDEX_op_or_vec, 0, r, a, b);
 }
 
 void tcg_gen_xor_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_xor_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_xor_vec);
     vec_gen_op3(INDEX_op_xor_vec, 0, r, a, b);
 }
 
@@ -693,25 +693,25 @@ static void do_shifti(TCGOpcode opc, unsigned vece,
 
 void tcg_gen_shli_vec(unsigned vece, TCGv_vec r, TCGv_vec a, int64_t i)
 {
-    vec_int32_op_instrumentation(vece, r, a, tcg_constant_i32(i), gen_helper_sym_shift_left_vec_int32);
+    // vec_int32_op_instrumentation(vece, r, a, tcg_constant_i32(i), gen_helper_sym_shift_left_vec_int32);
     do_shifti(INDEX_op_shli_vec, vece, r, a, i);
 }
 
 void tcg_gen_shri_vec(unsigned vece, TCGv_vec r, TCGv_vec a, int64_t i)
 {
-    vec_int32_op_instrumentation(vece, r, a, tcg_constant_i32(i), gen_helper_sym_logical_shift_right_vec_int32);
+    // vec_int32_op_instrumentation(vece, r, a, tcg_constant_i32(i), gen_helper_sym_logical_shift_right_vec_int32);
     do_shifti(INDEX_op_shri_vec, vece, r, a, i);
 }
 
 void tcg_gen_sari_vec(unsigned vece, TCGv_vec r, TCGv_vec a, int64_t i)
 {
-    vec_int32_op_instrumentation(vece, r, a, tcg_constant_i32(i), gen_helper_sym_arithmetic_shift_right_vec_int32);
+    // vec_int32_op_instrumentation(vece, r, a, tcg_constant_i32(i), gen_helper_sym_arithmetic_shift_right_vec_int32);
     do_shifti(INDEX_op_sari_vec, vece, r, a, i);
 }
 
 void tcg_gen_rotli_vec(unsigned vece, TCGv_vec r, TCGv_vec a, int64_t i)
 {
-    vec_int32_op_instrumentation(vece, r, a, tcg_constant_i32(i), gen_helper_sym_rotate_left_vec_int32);
+    // vec_int32_op_instrumentation(vece, r, a, tcg_constant_i32(i), gen_helper_sym_rotate_left_vec_int32);
     do_shifti(INDEX_op_rotli_vec, vece, r, a, i);
 }
 
@@ -719,7 +719,7 @@ void tcg_gen_rotri_vec(unsigned vece, TCGv_vec r, TCGv_vec a, int64_t i)
 {
     int bits = 8 << vece;
     tcg_debug_assert(i >= 0 && i < bits);
-    vec_int32_op_instrumentation(vece, r, a, tcg_constant_i32(i), gen_helper_sym_rotate_right_vec_int32);
+    // vec_int32_op_instrumentation(vece, r, a, tcg_constant_i32(i), gen_helper_sym_rotate_right_vec_int32);
     do_shifti(INDEX_op_rotli_vec, vece, r, a, -i & (bits - 1));
 }
 
@@ -763,18 +763,18 @@ void tcg_gen_cmp_vec(TCGCond cond, unsigned vece,
 
     g_assert(size_a == size_b && size_b == size_r);
 
-    gen_helper_sym_cmp_vec(
-            tcgv_vec_expr(r),
-            tcg_env,
-            buffer_address_a,
-            tcgv_vec_expr(a),
-            buffer_address_b,
-            tcgv_vec_expr(b),
-            tcg_constant_i32(cond),
-            buffer_address_r,
-            tcg_constant_i64(size_a),
-            tcg_constant_i64(vece)
-    );
+    // gen_helper_sym_cmp_vec(
+    //         tcgv_vec_expr(r),
+    //         tcg_env,
+    //         buffer_address_a,
+    //         tcgv_vec_expr(a),
+    //         buffer_address_b,
+    //         tcgv_vec_expr(b),
+    //         tcg_constant_i32(cond),
+    //         buffer_address_r,
+    //         tcg_constant_i64(size_a),
+    //         tcg_constant_i64(vece)
+    // );
 
     gen_helper_free(buffer_address_a);
     gen_helper_free(buffer_address_b);
@@ -819,31 +819,31 @@ static void do_op3_nofail(unsigned vece, TCGv_vec r, TCGv_vec a,
 
 void tcg_gen_add_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_add_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_add_vec);
     do_op3_nofail(vece, r, a, b, INDEX_op_add_vec);
 }
 
 void tcg_gen_sub_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_sub_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_sub_vec);
     do_op3_nofail(vece, r, a, b, INDEX_op_sub_vec);
 }
 
 void tcg_gen_mul_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_mul_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_mul_vec);
     do_op3_nofail(vece, r, a, b, INDEX_op_mul_vec);
 }
 
 void tcg_gen_ssadd_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_signed_saturating_add_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_signed_saturating_add_vec);
     do_op3_nofail(vece, r, a, b, INDEX_op_ssadd_vec);
 }
 
 void tcg_gen_usadd_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_unsigned_saturating_add_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_unsigned_saturating_add_vec);
 
     if (!do_op3(vece, r, a, b, INDEX_op_usadd_vec)) {
         const TCGOpcode *hold_list = tcg_swap_vecop_list(NULL);
@@ -861,13 +861,13 @@ void tcg_gen_usadd_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 
 void tcg_gen_sssub_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_signed_saturating_sub_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_signed_saturating_sub_vec);
     do_op3_nofail(vece, r, a, b, INDEX_op_sssub_vec);
 }
 
 void tcg_gen_ussub_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_unsigned_saturating_sub_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_unsigned_saturating_sub_vec);
 
     if (!do_op3(vece, r, a, b, INDEX_op_ussub_vec)) {
         const TCGOpcode *hold_list = tcg_swap_vecop_list(NULL);
@@ -913,18 +913,18 @@ static void do_minmax(unsigned vece, TCGv_vec r, TCGv_vec a,
 
     g_assert(size_a == size_b && size_b == size_r);
 
-    gen_helper_sym_ternary_vec(
-            tcgv_vec_expr(r),
-            tcg_env,
-            buffer_address_a,
-            tcgv_vec_expr(a),
-            buffer_address_b,
-            tcgv_vec_expr(b),
-            tcg_constant_i32(cond),
-            buffer_address_r,
-            tcg_constant_i64(size_a),
-            tcg_constant_i64(vece)
-    );
+    // gen_helper_sym_ternary_vec(
+    //         tcgv_vec_expr(r),
+    //         tcg_env,
+    //         buffer_address_a,
+    //         tcgv_vec_expr(a),
+    //         buffer_address_b,
+    //         tcgv_vec_expr(b),
+    //         tcg_constant_i32(cond),
+    //         buffer_address_r,
+    //         tcg_constant_i64(size_a),
+    //         tcg_constant_i64(vece)
+    // );
 
     gen_helper_free(buffer_address_a);
     gen_helper_free(buffer_address_b);
@@ -953,31 +953,31 @@ void tcg_gen_umax_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 
 void tcg_gen_shlv_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_shift_left_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_shift_left_vec);
     do_op3_nofail(vece, r, a, b, INDEX_op_shlv_vec);
 }
 
 void tcg_gen_shrv_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_logical_shift_right_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_logical_shift_right_vec);
     do_op3_nofail(vece, r, a, b, INDEX_op_shrv_vec);
 }
 
 void tcg_gen_sarv_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_arithmetic_shift_right_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_arithmetic_shift_right_vec);
     do_op3_nofail(vece, r, a, b, INDEX_op_sarv_vec);
 }
 
 void tcg_gen_rotlv_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_rotate_left_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_rotate_left_vec);
     do_op3_nofail(vece, r, a, b, INDEX_op_rotlv_vec);
 }
 
 void tcg_gen_rotrv_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_vec b)
 {
-    vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_rotate_right_vec);
+    // vec_vec_op_instrumentation(vece, r, a, b, gen_helper_sym_rotate_right_vec);
     do_op3_nofail(vece, r, a, b, INDEX_op_rotrv_vec);
 }
 
@@ -1009,25 +1009,25 @@ static void do_shifts(unsigned vece, TCGv_vec r, TCGv_vec a,
 
 void tcg_gen_shls_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_i32 b)
 {
-    vec_int32_op_instrumentation(vece, r, a, b, gen_helper_sym_shift_left_vec_int32);
+    // vec_int32_op_instrumentation(vece, r, a, b, gen_helper_sym_shift_left_vec_int32);
     do_shifts(vece, r, a, b, INDEX_op_shls_vec);
 }
 
 void tcg_gen_shrs_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_i32 b)
 {
-    vec_int32_op_instrumentation(vece, r, a, b, gen_helper_sym_logical_shift_right_vec_int32);
+    // vec_int32_op_instrumentation(vece, r, a, b, gen_helper_sym_logical_shift_right_vec_int32);
     do_shifts(vece, r, a, b, INDEX_op_shrs_vec);
 }
 
 void tcg_gen_sars_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_i32 b)
 {
-    vec_int32_op_instrumentation(vece, r, a, b, gen_helper_sym_arithmetic_shift_right_vec_int32);
+    // vec_int32_op_instrumentation(vece, r, a, b, gen_helper_sym_arithmetic_shift_right_vec_int32);
     do_shifts(vece, r, a, b, INDEX_op_sars_vec);
 }
 
 void tcg_gen_rotls_vec(unsigned vece, TCGv_vec r, TCGv_vec a, TCGv_i32 s)
 {
-    vec_int32_op_instrumentation(vece, r, a, s, gen_helper_sym_rotate_left_vec_int32);
+    // vec_int32_op_instrumentation(vece, r, a, s, gen_helper_sym_rotate_left_vec_int32);
     do_shifts(vece, r, a, s, INDEX_op_rotls_vec);
 }
 

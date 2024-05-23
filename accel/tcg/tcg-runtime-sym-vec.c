@@ -214,84 +214,101 @@ build_expression_for_vector_int32_op(
 }
 
 void *HELPER(sym_and_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size, uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_and);
 }
 
 void *HELPER(sym_or_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size, uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_or);
 }
 
 void *HELPER(sym_xor_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size, uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_xor);
 }
 
 void *HELPER(sym_add_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size, uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_add);
 }
 
 void *HELPER(sym_sub_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size, uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_sub);
 }
 
 void *HELPER(sym_mul_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size, uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_mul);
 }
 
 void *HELPER(sym_signed_saturating_add_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size,
                                             uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_sadd_sat);
 }
 
 void *HELPER(sym_signed_saturating_sub_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size,
                                             uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_ssub_sat);
 }
 
 void *HELPER(sym_unsigned_saturating_add_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size,
                                               uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_uadd_sat);
 }
 
 void *HELPER(sym_unsigned_saturating_sub_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size,
                                               uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_usub_sat);
 }
 
 void *
 HELPER(sym_shift_left_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size, uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_shift_left);
 }
 
 void *HELPER(sym_logical_shift_right_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size,
                                           uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece,
                                                  _sym_build_logical_shift_right);
 }
 
 void *HELPER(sym_arithmetic_shift_right_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size,
                                              uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece,
                                                  _sym_build_arithmetic_shift_right);
 }
 
 void *
 HELPER(sym_rotate_left_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size, uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, sym_rotate_left);
 }
 
 void *
 HELPER(sym_rotate_right_vec)(void *arg1, void *arg1_expr, void *arg2, void *arg2_expr, uint64_t size, uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_vector_op(arg1, arg1_expr, arg2, arg2_expr, size, vece,sym_rotate_right);
 }
 
 void *HELPER(sym_shift_left_vec_int32)(void *arg1, void *arg1_expr, uint32_t arg2, void *arg2_expr, uint64_t size,
                                        uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_int32_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, _sym_build_shift_left);
 }
 
 void *
 HELPER(sym_logical_shift_right_vec_int32)(void *arg1, void *arg1_expr, uint32_t arg2, void *arg2_expr, uint64_t size,
                                           uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_int32_op(arg1, arg1_expr, arg2, arg2_expr, size, vece,
                                                 _sym_build_logical_shift_right);
 }
@@ -299,17 +316,20 @@ HELPER(sym_logical_shift_right_vec_int32)(void *arg1, void *arg1_expr, uint32_t 
 void *
 HELPER(sym_arithmetic_shift_right_vec_int32)(void *arg1, void *arg1_expr, uint32_t arg2, void *arg2_expr, uint64_t size,
                                              uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_int32_op(arg1, arg1_expr, arg2, arg2_expr, size, vece,
                                                 _sym_build_arithmetic_shift_right);
 }
 
 void *HELPER(sym_rotate_left_vec_int32)(void *arg1, void *arg1_expr, uint32_t arg2, void *arg2_expr, uint64_t size,
                                         uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_int32_op(arg1, arg1_expr, arg2, arg2_expr, size, vece,sym_rotate_left);
 }
 
 void *HELPER(sym_rotate_right_vec_int32)(void *arg1, void *arg1_expr, uint32_t arg2, void *arg2_expr, uint64_t size,
                                          uint64_t vece) {
+    return NULL;
     return build_expression_for_vector_int32_op(arg1, arg1_expr, arg2, arg2_expr, size, vece, sym_rotate_right);
 }
 
@@ -319,6 +339,7 @@ void *HELPER(sym_rotate_right_vec_int32)(void *arg1, void *arg1_expr, uint32_t a
  * value_expression is resized to match vece before being duplicated.
  */
 void *HELPER(sym_duplicate_value_into_vec)(void *value_expression, uint64_t vector_size, uint64_t vece) {
+    return NULL;
     g_assert(vector_size == 64 || vector_size == 128 || vector_size == 256);
     uint64_t element_size = vece_element_size(vece);
     g_assert(element_size <= vector_size);
@@ -358,6 +379,7 @@ void *HELPER(sym_load_and_duplicate_into_vec)(
         uint64_t address_offset,
         uint64_t vector_size, uint64_t vece
 ) {
+    return NULL;
     g_assert(vector_size == 64 || vector_size == 128 || vector_size == 256);
     uint64_t element_size = vece_element_size(vece);
     g_assert(element_size <= vector_size);
@@ -416,6 +438,7 @@ void *HELPER(sym_cmp_vec)(
         /* TCGCond */ uint32_t comparison_operator, void *result_concrete,
         uint64_t vector_size, uint64_t vece
 ) {
+    return NULL;
     uint64_t element_size = vece_element_size(vece);
 
     g_assert(vector_size % element_size == 0);
@@ -509,6 +532,7 @@ void *HELPER(sym_ternary_vec)(
         /* TCGCond */ uint32_t comparison_operator, void *concrete_result,
         uint64_t vector_size, uint64_t vece
 ) {
+    return NULL;
     uint64_t element_size = vece_element_size(vece);
 
     g_assert(vector_size % element_size == 0);

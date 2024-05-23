@@ -30,7 +30,8 @@
 #include "qapi/error.h"
 #include "qom/object.h"
 
-#define PIT_FREQ 1193182
+// lower clock frequency
+#define PIT_FREQ (1193182 / 10)
 
 typedef struct PITChannelInfo {
     int gate;

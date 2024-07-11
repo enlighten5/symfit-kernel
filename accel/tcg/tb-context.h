@@ -31,6 +31,7 @@ typedef struct TBContext TBContext;
 struct TBContext {
 
     struct qht htable;
+    struct qht htable2;
 
     /* statistics */
     unsigned tb_flush_count;

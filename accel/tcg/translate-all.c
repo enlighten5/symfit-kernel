@@ -662,6 +662,7 @@ void cpu_interrupt(CPUState *cpu, int mask)
 void tcg_flush_jmp_cache(CPUState *cpu)
 {
     CPUJumpCache *jc = cpu->tb_jmp_cache;
+    CPUJumpCache *jc2 = cpu->tb_jmp_cache2;
 
     /* During early initialization, the cache may not yet be allocated. */
     if (unlikely(jc == NULL)) {
@@ -670,5 +671,13 @@ void tcg_flush_jmp_cache(CPUState *cpu)
 
     for (int i = 0; i < TB_JMP_CACHE_SIZE; i++) {
         qatomic_set(&jc->array[i].tb, NULL);
+    }
+    // flush jc2 if not null
+    if (unlikely(jc2 == NULL)) {
+        return;
+    }
+
+    for (int i = 0; i < TB_JMP_CACHE_SIZE; i++) {
+        qatomic_set(&jc2->array[i].tb, NULL);
     }
 }

@@ -77,9 +77,10 @@ static TCGOp *gen_tb_start(DisasContextBase *db, uint32_t cflags)
                          offsetof(ArchCPU, parent_obj.neg.icount_decr.u16.low)
                          - offsetof(ArchCPU, env));
     }
-
-    TCGv_i64 block = tcg_constant_i64((int64_t) db->tb);
-    gen_helper_sym_notify_block(block);
+    // if (symbolic) {
+        TCGv_i64 block = tcg_constant_i64((int64_t) db->tb);
+        gen_helper_sym_notify_block(block);
+    // }
 
     return icount_start_insn;
 }

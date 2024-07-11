@@ -18,10 +18,12 @@
  * SYM_HELPER_BINARY_64 generates the analogous code for 64-bit helpers. */
 
 #define SYM_HELPER_BINARY_32(name)                                              \
+    if (symbolic)                                                               \
     gen_helper_sym_ ## name ## _i32(tcgv_i32_expr(ret),                         \
                            arg1, tcgv_i32_expr(arg1),                           \
                            arg2, tcgv_i32_expr(arg2))
 #define SYM_HELPER_BINARY_64(name)                                              \
+    if (symbolic)                                                               \
     gen_helper_sym_ ## name ## _i64(tcgv_i64_expr(ret),                         \
                            arg1, tcgv_i64_expr(arg1),                           \
                            arg2, tcgv_i64_expr(arg2))

@@ -297,7 +297,7 @@ static void *sym_load_guest_internal(CPUArchState *env,
                                      uint64_t load_length, uint8_t result_length,
                                      target_ulong mmu_idx)
 {
-    return NULL;
+    // return NULL;
     /* Try an alternative address */
     if (addr_expr != NULL)
         _sym_push_path_constraint(
@@ -328,12 +328,25 @@ void *HELPER(sym_load_guest_i64)(CPUArchState *env,
     return sym_load_guest_internal(env, addr, addr_expr, length, 8, mmu_idx);
 }
 
+void HELPER(sym_load_checker)(CPUArchState *env,
+                                 uint64_t addr, target_ulong mmu_idx)
+{
+    if (!symbolic && addr == 0x10000000) {
+        printf("[--] switching to symbolic\n");
+        symbolic = 1;
+        void *host_addr = tlb_vaddr_to_host(env, addr, MMU_DATA_LOAD, mmu_idx);
+        symcc_make_symbolic(host_addr, 1280);
+        CPUState *cpu = env_cpu(env);
+        cpu_loop_exit_noexc(cpu);
+    }
+}
+
 static void sym_store_guest_internal(CPUArchState *env,
                                      uint64_t value, void *value_expr,
                                      uint64_t addr, void *addr_expr,
                                      uint64_t length, target_ulong mmu_idx)
 {
-    return NULL;
+    // return NULL;
     /* Try an alternative address */
     if (addr_expr != NULL)
         _sym_push_path_constraint(
@@ -366,7 +379,7 @@ void HELPER(sym_store_guest_i64)(CPUArchState *env,
 static void *sym_load_host_internal(void *addr, uint64_t offset,
                                     uint64_t load_length, uint64_t result_length)
 {
-    return NULL;
+    // return NULL;
     void *memory_expr = _sym_read_memory(
         (uint8_t*)addr + offset, load_length, true);
 
@@ -394,7 +407,7 @@ void *HELPER(sym_load_host_vec)(void *addr, uint64_t offset, uint64_t length)
 void HELPER(sym_store_host)(void *value_expr, void *addr,
                                 uint64_t offset, uint64_t length)
 {
-    return NULL;
+    // return NULL;
     _sym_write_memory((uint8_t*)addr + offset, length, value_expr, true);
 }
 
@@ -605,17 +618,26 @@ static void *sym_movcond_internal(CPUArchState *env,
                               int32_t comparison_operator,
                               uint64_t is_taken, uint8_t result_bits)
 {
-    return NULL;
+    // return NULL;
     if (c1_expr == NULL && c2_expr == NULL && v1_expr == NULL && v2_expr == NULL) {
         return NULL;
     }
 
-    if (c1_expr == NULL) {
-        c1_expr = _sym_build_integer(c1, _sym_bits_helper(c2_expr));
-    }
-
-    if (c2_expr == NULL) {
-        c2_expr = _sym_build_integer(c2, _sym_bits_helper(c1_expr));
+    // fix the case when c1_expr and c2_expr are both concrete
+    if (c1_expr == NULL && c2_expr == NULL) {
+        if (v1_expr == NULL) {
+            c1_expr = _sym_build_integer(v1, _sym_bits_helper(v2_expr));
+        } else {
+            c1_expr = _sym_build_integer(v1, _sym_bits_helper(v1_expr));
+        }
+        c2_expr = _sym_build_integer(v2, _sym_bits_helper(c1_expr));
+    } else {
+        if (c1_expr == NULL) {
+            c1_expr = _sym_build_integer(c1, _sym_bits_helper(c2_expr));
+        }
+        if (c2_expr == NULL) {
+            c2_expr = _sym_build_integer(c2, _sym_bits_helper(c1_expr));
+        }
     }
 
     if (v1_expr == NULL) {
@@ -671,6 +693,12 @@ void *HELPER(sym_movcond_i64)(CPUArchState *env,
 
 void HELPER(sym_notify_call)(uint64_t return_address)
 {
+    // FILE *log = qemu_log_trylock();
+    // if (log) {
+    //     fprintf(log, "call %lx\n", return_address);
+    //     qemu_log_unlock(log);
+    // }
+
     // _sym_notify_call(return_address);
 }
 
@@ -678,7 +706,7 @@ void HELPER(sym_notify_return)(uint64_t return_address)
 {
     // _sym_notify_ret(return_address);
 }
-
+int count = 0;
 void HELPER(sym_notify_block)(uint64_t block_id)
 {
     // _sym_notify_basic_block(block_id);
@@ -687,5 +715,9 @@ void HELPER(sym_notify_block)(uint64_t block_id)
 void HELPER(sym_collect_garbage)(void)
 {
     // _sym_collect_garbage();
+    // if (!symbolic && ++count > 100000) {
+    //     printf("[--] switching to symbolic\n");
+    //     symbolic = 1;
+    // }
 }
 

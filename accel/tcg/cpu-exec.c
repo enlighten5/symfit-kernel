@@ -232,6 +232,9 @@ static TranslationBlock *tb_htable_lookup(CPUState *cpu, vaddr pc,
     desc.page_addr0 = phys_pc;
     h = tb_hash_func(phys_pc, (cflags & CF_PCREL ? 0 : pc),
                      flags, cs_base, cflags);
+    if (symbolic) {
+        return qht_lookup_custom(&tb_ctx.htable2, &desc, h, tb_lookup_cmp);
+    }
     return qht_lookup_custom(&tb_ctx.htable, &desc, h, tb_lookup_cmp);
 }
 
@@ -248,7 +251,12 @@ static inline TranslationBlock *tb_lookup(CPUState *cpu, vaddr pc,
     tcg_debug_assert(!(cflags & CF_INVALID));
 
     hash = tb_jmp_cache_hash_func(pc);
-    jc = cpu->tb_jmp_cache;
+    // jc = cpu->tb_jmp_cache;
+    if (symbolic) {
+        jc = cpu->tb_jmp_cache2;
+    } else {
+        jc = cpu->tb_jmp_cache;
+    }
 
     tb = qatomic_read(&jc->array[hash].tb);
     if (likely(tb &&
@@ -994,7 +1002,11 @@ cpu_exec_loop(CPUState *cpu, SyncClocks *sc)
                  * for the fast lookup
                  */
                 h = tb_jmp_cache_hash_func(pc);
-                jc = cpu->tb_jmp_cache;
+                if (symbolic) {
+                    jc = cpu->tb_jmp_cache2;
+                } else {
+                    jc = cpu->tb_jmp_cache;
+                }
                 jc->array[h].pc = pc;
                 qatomic_set(&jc->array[h].tb, tb);
             }
@@ -1074,6 +1086,7 @@ bool tcg_exec_realizefn(CPUState *cpu, Error **errp)
     }
 
     cpu->tb_jmp_cache = g_new0(CPUJumpCache, 1);
+    cpu->tb_jmp_cache2 = g_new0(CPUJumpCache, 1);
     tlb_init(cpu);
 #ifndef CONFIG_USER_ONLY
     tcg_iommu_init_notifier_list(cpu);
@@ -1092,4 +1105,5 @@ void tcg_exec_unrealizefn(CPUState *cpu)
 
     tlb_destroy(cpu);
     g_free_rcu(cpu->tb_jmp_cache, rcu);
+    g_free_rcu(cpu->tb_jmp_cache2, rcu);
 }

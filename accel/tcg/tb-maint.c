@@ -60,6 +60,8 @@ void tb_htable_init(void)
     unsigned int mode = QHT_MODE_AUTO_RESIZE;
 
     qht_init(&tb_ctx.htable, tb_cmp, CODE_GEN_HTABLE_SIZE, mode);
+    // init the second hash table for symbolic mode.
+    qht_init(&tb_ctx.htable2, tb_cmp, CODE_GEN_HTABLE_SIZE, mode);
 }
 
 typedef struct PageDesc PageDesc;
@@ -771,6 +773,7 @@ static void do_tb_flush(CPUState *cpu, run_on_cpu_data tb_flush_count)
     }
 
     qht_reset_size(&tb_ctx.htable, CODE_GEN_HTABLE_SIZE);
+    qht_reset_size(&tb_ctx.htable2, CODE_GEN_HTABLE_SIZE);
     tb_remove_all();
 
     tcg_region_reset_all();
@@ -888,9 +891,13 @@ static void tb_jmp_cache_inval_tb(TranslationBlock *tb)
 
         CPU_FOREACH(cpu) {
             CPUJumpCache *jc = cpu->tb_jmp_cache;
+            CPUJumpCache *jc2 = cpu->tb_jmp_cache2;
 
             if (qatomic_read(&jc->array[h].tb) == tb) {
                 qatomic_set(&jc->array[h].tb, NULL);
+            }
+            if (qatomic_read(&jc2->array[h].tb) == tb) {
+                qatomic_set(&jc2->array[h].tb, NULL);
             }
         }
     }
@@ -918,6 +925,9 @@ static void do_tb_phys_invalidate(TranslationBlock *tb, bool rm_from_page_list)
     phys_pc = tb_page_addr0(tb);
     h = tb_hash_func(phys_pc, (orig_cflags & CF_PCREL ? 0 : tb->pc),
                      tb->flags, tb->cs_base, orig_cflags);
+
+    // remove from symbolic mode hash table, ignore return value
+    qht_remove(&tb_ctx.htable2, tb, h);
     if (!qht_remove(&tb_ctx.htable, tb, h)) {
         return;
     }
@@ -985,7 +995,11 @@ TranslationBlock *tb_link_page(TranslationBlock *tb)
     /* add in the hash table */
     h = tb_hash_func(tb_page_addr0(tb), (tb->cflags & CF_PCREL ? 0 : tb->pc),
                      tb->flags, tb->cs_base, tb->cflags);
-    qht_insert(&tb_ctx.htable, tb, h, &existing_tb);
+    if (symbolic) {
+        qht_insert(&tb_ctx.htable2, tb, h, &existing_tb);
+    } else {
+        qht_insert(&tb_ctx.htable, tb, h, &existing_tb);
+    }
 
     /* remove TB from the page(s) if we couldn't insert it */
     if (unlikely(existing_tb)) {

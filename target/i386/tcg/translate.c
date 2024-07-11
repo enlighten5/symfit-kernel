@@ -3630,9 +3630,11 @@ static bool disas_insn(DisasContext *s, CPUState *cpu)
 #if TARGET_LONG_BITS == 32
             TCGv_i64 call_addr = tcg_temp_new_i64();
             tcg_gen_extu_i32_i64(call_addr, eip_next_tl(s));
-            gen_helper_sym_notify_call(call_addr);
+            if (symbolic)
+                gen_helper_sym_notify_call(call_addr);
 #elif TARGET_LONG_BITS == 64
-            gen_helper_sym_notify_call(eip_next_tl(s));
+            if (symbolic)
+                gen_helper_sym_notify_call(eip_next_tl(s));
 #else
 #error Unhandled TARGET_LONG_BITS value
 #endif
@@ -5099,9 +5101,11 @@ static bool disas_insn(DisasContext *s, CPUState *cpu)
 #if TARGET_LONG_BITS == 32
         TCGv_i64 ret_addr = tcg_temp_new_i64();
         tcg_gen_extu_i32_i64(ret_addr, s->T0);
-        gen_helper_sym_notify_return(ret_addr);
+        if (symbolic)
+            gen_helper_sym_notify_return(ret_addr);
 #elif TARGET_LONG_BITS == 64
-        gen_helper_sym_notify_return(s->T0);
+        if (symbolic)
+            gen_helper_sym_notify_return(s->T0);
 #else
 #error Unhandled TARGET_LONG_BITS value
 #endif
@@ -5116,9 +5120,11 @@ static bool disas_insn(DisasContext *s, CPUState *cpu)
 #if TARGET_LONG_BITS == 32
         TCGv_i64 ret_addr2 = tcg_temp_new_i64();
         tcg_gen_extu_i32_i64(ret_addr2, s->T0);
-        gen_helper_sym_notify_return(ret_addr2);
+        if (symbolic)
+            gen_helper_sym_notify_return(ret_addr2);
 #elif TARGET_LONG_BITS == 64
-        gen_helper_sym_notify_return(s->T0);
+        if (symbolic)
+            gen_helper_sym_notify_return(s->T0);
 #else
 #error Unhandled TARGET_LONG_BITS value
 #endif
@@ -5177,9 +5183,11 @@ static bool disas_insn(DisasContext *s, CPUState *cpu)
 #if TARGET_LONG_BITS == 32
             TCGv_i64 call_addr = tcg_temp_new_i64();
             tcg_gen_extu_i32_i64(call_addr, eip_next_tl(s));
-            gen_helper_sym_notify_call(call_addr);
+            if (symbolic)
+                gen_helper_sym_notify_call(call_addr);
 #elif TARGET_LONG_BITS == 64
-            gen_helper_sym_notify_call(eip_next_tl(s));
+            if (symbolic)
+                gen_helper_sym_notify_call(eip_next_tl(s));
 #else
 #error Unhandled TARGET_LONG_BITS value
 #endif

@@ -592,6 +592,7 @@ extern __thread TCGContext *tcg_ctx;
 extern const void *tcg_code_gen_epilogue;
 extern uintptr_t tcg_splitwx_diff;
 extern TCGv_env tcg_env;
+extern int symbolic;
 
 bool in_code_gen_buffer(const void *p);
 
@@ -647,6 +648,9 @@ static inline TCGTemp *temp_expr(TCGTemp *ts) {
 
     tcg_debug_assert(temp_idx(ts) + temp_sz + 1 < tcg_ctx->nb_temps);
     tcg_debug_assert(!ts->symbolic_expression);
+    // if (!(ts + temp_sz + 1)->symbolic_expression) {
+    //     fprintf(stderr, "temp_expr: temp %d\n", temp_sz);
+    // }
     tcg_debug_assert((ts + temp_sz + 1)->symbolic_expression);
 
     return ts + temp_sz + 1;

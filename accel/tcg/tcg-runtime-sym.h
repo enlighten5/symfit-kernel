@@ -89,6 +89,7 @@ DEF_HELPER_FLAGS_2(sym_bswap, TCG_CALL_NO_RWG_SE, ptr, ptr, i64)
 /* Guest memory */
 DEF_HELPER_FLAGS_5(sym_load_guest_i32, TCG_CALL_NO_RWG, ptr, env, i64, ptr, i64, i64)
 DEF_HELPER_FLAGS_5(sym_load_guest_i64, TCG_CALL_NO_RWG, ptr, env, i64, ptr, i64, i64)
+DEF_HELPER_FLAGS_3(sym_load_checker, TCG_CALL_NO_RWG, void, env, i64, i64)
 DEF_HELPER_FLAGS_7(sym_store_guest_i32, TCG_CALL_NO_RWG, void, env, i32, ptr,
                    i64, ptr, i64, i64)
 DEF_HELPER_FLAGS_7(sym_store_guest_i64, TCG_CALL_NO_RWG, void, env, i64, ptr,

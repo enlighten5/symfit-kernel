@@ -699,25 +699,32 @@ void HELPER(sym_notify_call)(uint64_t return_address)
     //     qemu_log_unlock(log);
     // }
 
-    // _sym_notify_call(return_address);
+    _sym_notify_call(return_address);
 }
 
 void HELPER(sym_notify_return)(uint64_t return_address)
 {
-    // _sym_notify_ret(return_address);
+    _sym_notify_ret(return_address);
 }
 int count = 0;
 void HELPER(sym_notify_block)(uint64_t block_id)
 {
-    // _sym_notify_basic_block(block_id);
+    _sym_notify_basic_block(block_id);
 }
 
 void HELPER(sym_collect_garbage)(void)
 {
-    // _sym_collect_garbage();
+    _sym_collect_garbage();
     // if (!symbolic && ++count > 100000) {
     //     printf("[--] switching to symbolic\n");
     //     symbolic = 1;
     // }
+}
+
+void HELPER(sym_check_state)(void) {
+    if (!_sym_interesting_block()) {
+        // printf("[--] switching to concrete\n");
+        symbolic = 0;
+    }
 }
 

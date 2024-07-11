@@ -3724,8 +3724,9 @@ void tcg_gen_goto_tb(unsigned idx)
     tcg_ctx->goto_tb_issue_mask |= 1 << idx;
 #endif
     plugin_gen_disable_mem_helpers();
-    if (symbolic)
+    if (symbolic) {
         gen_helper_sym_collect_garbage();
+    }
     tcg_gen_op1i(INDEX_op_goto_tb, idx);
 }
 
